@@ -3,8 +3,14 @@ server:
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
+
+  # Fixes warning related to OIV
   jpa:
     open-in-view: false
+
+  # https://spring.io/blog/2018/11/08/spring-boot-in-a-container
+  jmx:
+    enabled: false
 
 ---
 spring:

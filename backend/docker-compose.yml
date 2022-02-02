@@ -10,14 +10,15 @@ services:
       - POSTGRES_DB=productive
     volumes:
       - db:/var/lib/postgresql/data
+
   backend:
     image: bazel/backend:docker
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=development
+      - JAVA_TOOL_OPTIONS='java.util.logging.manager=org.apache.logging.log4j.jul.LogManager'
+      - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/productive
-
     depends_on:
       - db
 volumes:
