@@ -1,6 +1,17 @@
+server:
+  port: 8080
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
     username: dev
     password: dev
     url: jdbc:postgresql://:5432/productive
