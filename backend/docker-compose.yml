@@ -16,7 +16,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - JAVA_TOOL_OPTIONS='java.util.logging.manager=org.apache.logging.log4j.jul.LogManager'
+      - >-
+        JAVA_TOOL_OPTIONS=
+        -Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager
+        -Djava.security.egd=file:/dev/./urandom
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/productive
     depends_on:
