@@ -1,9 +1,6 @@
 server:
   port: 8080
 spring:
-  datasource:
-    driver-class-name: org.postgresql.Driver
-
   # Fixes warning related to OIV
   jpa:
     open-in-view: false
@@ -18,6 +15,14 @@ spring:
     activate:
       on-profile: dev
   datasource:
+    driver-class-name: org.postgresql.Driver
     username: dev
     password: dev
     url: jdbc:postgresql://:5432/productive
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:tc:postgresql:14:///productive

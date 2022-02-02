@@ -27,69 +27,89 @@ load("@rules_jvm_external//:specs.bzl", "maven")
 
 SPRING_BOOT_VERSION = "2.6.3"
 
+java_deps = [
+    "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.1",
+    "org.springframework.boot:spring-boot-starter-actuator:{}".format(SPRING_BOOT_VERSION),
+    "org.springframework.boot:spring-boot-starter-data-jpa:{}".format(SPRING_BOOT_VERSION),
+    "org.springframework.boot:spring-boot-starter-security:{}".format(SPRING_BOOT_VERSION),
+    "org.springframework.boot:spring-boot-starter-validation:{}".format(SPRING_BOOT_VERSION),
+    "org.springframework.boot:spring-boot-loader:{}".format(SPRING_BOOT_VERSION),
+    maven.artifact(
+        "org.springframework.boot",
+        "spring-boot-starter-log4j2",
+        SPRING_BOOT_VERSION,
+        exclusions = [
+            "org.apache.logging.log4j:log4j-slf4j-impl",
+        ],
+    ),
+    "org.springframework.boot:spring-boot-starter-web:{}".format(SPRING_BOOT_VERSION),
+    "org.flywaydb:flyway-core:8.4.3",
+    "org.postgresql:postgresql:42.3.1",
+    "org.glassfish.jaxb:jaxb-runtime:2.3.2",
+]
+
+java_dev_deps = [
+    maven.artifact(
+        "org.springframework.boot",
+        "spring-boot-devtools",
+        SPRING_BOOT_VERSION,
+        neverlink = True,
+    ),
+    maven.artifact(
+        "org.springframework.boot",
+        "spring-boot-configuration-processor",
+        SPRING_BOOT_VERSION,
+        neverlink = True,
+    ),
+    maven.artifact(
+        "org.projectlombok",
+        "lombok",
+        "1.18.22",
+        neverlink = True,
+    ),
+]
+
+java_test_deps = [
+    maven.artifact(
+        "org.springframework.boot",
+        "spring-boot-starter-test",
+        SPRING_BOOT_VERSION,
+        testonly = True,
+    ),
+    maven.artifact(
+        "org.springframework.security",
+        "spring-security-test",
+        "5.6.1",
+        testonly = True,
+    ),
+    maven.artifact(
+        "org.testcontainers",
+        "junit-jupiter",
+        "1.16.3",
+        testonly = True,
+    ),
+    maven.artifact(
+        "org.testcontainers",
+        "postgresql",
+        "1.16.3",
+        testonly = True,
+    ),
+    maven.artifact(
+        "org.junit.platform",
+        "junit-platform-launcher",
+        "1.8.2",
+        testonly = True,
+    ),
+    maven.artifact(
+        "org.junit.platform",
+        "junit-platform-reporting",
+        "1.8.2",
+        testonly = True,
+    ),
+]
+
 maven_install(
-    artifacts = [
-        "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.1",
-        "org.springframework.boot:spring-boot-starter-actuator:{}".format(SPRING_BOOT_VERSION),
-        "org.springframework.boot:spring-boot-starter-data-jpa:{}".format(SPRING_BOOT_VERSION),
-        "org.springframework.boot:spring-boot-starter-security:{}".format(SPRING_BOOT_VERSION),
-        "org.springframework.boot:spring-boot-starter-validation:{}".format(SPRING_BOOT_VERSION),
-        "org.springframework.boot:spring-boot-loader:{}".format(SPRING_BOOT_VERSION),
-        maven.artifact(
-            "org.springframework.boot",
-            "spring-boot-starter-log4j2",
-            SPRING_BOOT_VERSION,
-            exclusions = [
-                "org.apache.logging.log4j:log4j-slf4j-impl",
-            ],
-        ),
-        "org.springframework.boot:spring-boot-starter-web:{}".format(SPRING_BOOT_VERSION),
-        "org.flywaydb:flyway-core:8.4.3",
-        "org.postgresql:postgresql:42.3.1",
-        "org.glassfish.jaxb:jaxb-runtime:2.3.2",
-        maven.artifact(
-            "org.springframework.boot",
-            "spring-boot-devtools",
-            SPRING_BOOT_VERSION,
-            neverlink = True,
-        ),
-        maven.artifact(
-            "org.springframework.boot",
-            "spring-boot-configuration-processor",
-            SPRING_BOOT_VERSION,
-            neverlink = True,
-        ),
-        maven.artifact(
-            "org.projectlombok",
-            "lombok",
-            "1.18.22",
-            neverlink = True,
-        ),
-        maven.artifact(
-            "org.springframework.boot",
-            "spring-boot-starter-test",
-            SPRING_BOOT_VERSION,
-            testonly = True,
-        ),
-        maven.artifact(
-            "org.springframework.security",
-            "spring-security-test",
-            "5.6.1",
-            testonly = True,
-        ),
-        maven.artifact(
-            "org.testcontainers",
-            "junit-jupiter",
-            "1.16.3",
-            testonly = True,
-        ),
-        maven.artifact(
-            "org.testcontainers",
-            "postgresql",
-            "1.16.3",
-            testonly = True,
-        ),
-    ],
+    artifacts = java_deps + java_dev_deps + java_test_deps,
     excluded_artifacts = [
         "org.springframework.boot:spring-boot-starter-logging",
     ],
@@ -116,11 +136,30 @@ http_archive(
     ],
 )
 
+########################################
+#### rules_jvm_contrib
+########################################
+## Needed for junit5 support while the java_test doesn't support it.
+## See: https://github.com/bazelbuild/bazel/issues/6681
+http_archive(
+    name = "contrib_rules_jvm",
+    sha256 = "f27b6a86481e78f659a5213978056aa88344041858548d76a1baba56a1e6048c",
+    strip_prefix = "rules_jvm-0.1.0",
+    url = "https://github.com/bazel-contrib/rules_jvm/archive/v0.1.0.tar.gz",
+)
+
+load("@contrib_rules_jvm//:repositories.bzl", "contrib_rules_jvm_deps")
+
+contrib_rules_jvm_deps()
+
+load("@contrib_rules_jvm//:setup.bzl", "contrib_rules_jvm_setup")
+
+contrib_rules_jvm_setup()
+
 #######################################
 ### Go toolchain
 #######################################
-# This toolchain is needed to allow crosscompiling docker image from darwin-arm64 to linux-amd64.
-# Not sure why but io_bazel_rules_docker fails if this is called after it.
+# This toolchain is needed by rules_docker. rules_docker's bazel_gazelle was failing so i had to pull in the newest version
 http_archive(
     name = "io_bazel_rules_go",
     sha256 = "d6b2513456fe2229811da7eb67a444be7785f5323c6708b38d851d2b51e54d83",
@@ -157,22 +196,6 @@ http_archive(
     strip_prefix = "rules_docker-0.23.0",
     urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.23.0/rules_docker-v0.23.0.tar.gz"],
 )
-
-#load(
-#    "@io_bazel_rules_docker//toolchains/docker:toolchain.bzl",
-#    docker_toolchain_configure = "toolchain_configure",
-#)
-#
-#docker_toolchain_configure(
-#    name = "docker_config",
-#    # Replace this with an absolute path to a directory which has a custom docker
-#    # client config.json. Note relative paths are not supported.
-#    # Docker allows you to specify custom authentication credentials
-#    # in the client configuration JSON file.
-#    # See https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
-#    # for more details.
-#    client_config = "${DOCKER_CONFIG}",
-#)
 
 load(
     "@io_bazel_rules_docker//repositories:repositories.bzl",

@@ -28,16 +28,20 @@ java_library(
     ],
 )
 
-java_test(
+load("@contrib_rules_jvm//java:defs.bzl", "JUNIT5_DEPS", "java_junit5_test")
+
+java_junit5_test(
     name = "backend-test",
-    srcs = glob(["src/test/java/com/lucasharada/productivebe/*.java"]),
-    test_class = "com.lucasharada.productivebe.ProductiveBeApplicationTest",
+    srcs = glob(["src/test/java/**/*.java"]),
+    test_class = "com.lucasharada.productivebe.ProductiveBeApplicationTests",
+    runtime_deps = JUNIT5_DEPS,
     deps = [
         ":backend-lib",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_springframework_boot_spring_boot_starter_test",
         "@maven//:org_springframework_boot_spring_boot_test",
         "@maven//:org_springframework_security_spring_security_test",
+        "@maven//:org_springframework_spring_test",
         "@maven//:org_testcontainers_junit_jupiter",
         "@maven//:org_testcontainers_postgresql",
     ],
